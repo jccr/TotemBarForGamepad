@@ -2,7 +2,7 @@
 ## Title: Totem Bar for Gamepad
 ## Notes: Shaman totem bar with totem timers, Totem Bar Focus for gamepads, and Edit Mode support
 ## Author: jccr
-## Version: 0.1.0
+## Version: 0.2.0
 ## IconTexture: Interface\AddOns\TotemBarForGamepad\Media\Logo
 ## SavedVariablesPerCharacter: TotemBarForGamepadDB
 

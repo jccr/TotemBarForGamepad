@@ -26,6 +26,7 @@ src/        the addon, exactly as it's installed (TOC, Lua, XML, Media/)
 test/       offline test suite (see test/README.md)
 assets/     the full-size logo (the addon ships a small icon in src/Media)
 Justfile    test and build recipes
+CHANGELOG.md  what changed in each version
 ```
 
 ## Development
