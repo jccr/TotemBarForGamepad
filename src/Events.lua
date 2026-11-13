@@ -124,6 +124,12 @@ function on.PLAYER_REGEN_ENABLED()
     end
 end
 
+-- The screen's height in UI units changed: the default spot moves with it.
+function on.UI_SCALE_CHANGED()
+    if TotemBarForGamepadDB and TotemBarForGamepadDB.offsetY == nil then ns.ApplyActiveLayout() end
+end
+on.DISPLAY_SIZE_CHANGED = on.UI_SCALE_CHANGED
+
 -- Edit Mode loaded its layouts, or the active one changed.
 on.EDIT_MODE_LAYOUTS_UPDATED = function() ns.ApplyActiveLayout() end
 -- The game's key bindings: the keys shown on the bar.

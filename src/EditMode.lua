@@ -8,7 +8,8 @@ if not ns.isShaman then return end
 -- Edit Mode layout keeps its own copy in TotemBarForGamepadDB.layouts, which is
 -- restored into the top level when that layout becomes active.
 -- x/y are the bar's center offset from UIParent's center in UIParent units,
--- so changing scale never moves the bar.
+-- so changing scale never moves the bar. No y: the default spot, worked out
+-- from the screen's height and the bar's (ns.BAR_DEFAULT_BOTTOM_SHARE).
 local LAYOUT_SETTINGS = { "offsetX", "offsetY", "barScale", "barOrientation", "flyoutsOpenDown", "weaponButtonSide" }
 local activeLayoutKey
 
@@ -55,12 +56,20 @@ local function ApplyPosition()
     -- (layout-local.txt) and restore it over ours at login; keep it from that.
     ns.bar:SetUserPlaced(false)
     ns.bar:SetScale(scale)
-    ns.bar:ClearAllPoints()
-    ns.bar:SetPoint("CENTER", UIParent, "CENTER", (TotemBarForGamepadDB.offsetX or 0) / scale, (TotemBarForGamepadDB.offsetY or 0) / scale)
-    if ns.SetBarFocusRestPosition then
-        ns.SetBarFocusRestPosition(scale, TotemBarForGamepadDB.offsetX or 0, TotemBarForGamepadDB.offsetY or 0)
+    local x, y = TotemBarForGamepadDB.offsetX or 0, TotemBarForGamepadDB.offsetY
+    if y == nil then
+        -- Center offset that puts the bar's bottom edge at the default height.
+        local screen = UIParent:GetHeight()
+        y = math.floor(screen * (ns.BAR_DEFAULT_BOTTOM_SHARE - 0.5) + ns.bar:GetHeight() * scale / 2 + 0.5)
     end
+    ns.bar:ClearAllPoints()
+    ns.bar:SetPoint("CENTER", UIParent, "CENTER", x / scale, y / scale)
+    if ns.SetBarFocusRestPosition then ns.SetBarFocusRestPosition(scale, x, y) end
 end
+
+-- The bar's size changes with its layout: UpdateLayout re-places a bar in
+-- the default spot.
+ns.ApplyBarPosition = ApplyPosition
 
 -- Convert wherever the bar currently sits into the stored center offset.
 local function GetCenterOffset()
@@ -411,7 +420,7 @@ local function CreateEditModeDialog()
 
     CreateResetButton("Reset Position", function()
         SetLayoutSetting("offsetX", ns.defaults.offsetX)
-        SetLayoutSetting("offsetY", ns.defaults.offsetY)
+        SetLayoutSetting("offsetY", nil)
         ApplyPosition()
     end)
 

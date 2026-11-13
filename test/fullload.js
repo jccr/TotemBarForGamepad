@@ -237,6 +237,35 @@ expect("unlearned pick casts nothing", NS.slots[earthIdx]:GetAttribute("spell1")
 LISTS = savedLists; NS.UpdateLayout()
 expect("relearned pick casts", NS.slots[earthIdx]:GetAttribute("spell1"), "Spell8075")
 ACTIONS[1] = nil; ACTIONS[110] = nil
+-- Default spot: the bar's bottom edge 5% of the screen's height up
+-- (stub bar height 100: center = -H/2 + 0.05H + 50 at scale 1).
+db.offsetY = nil; db.barScale = 1
+UIParent.GetHeight = function() return 768 end; ev(NS.bar, "UI_SCALE_CHANGED")
+expect("default spot on 768", NS.barFocus:GetAttribute("tbg-bar-y"), -296)
+UIParent.GetHeight = function() return 1200 end; ev(NS.bar, "DISPLAY_SIZE_CHANGED")
+expect("default spot on 1200", NS.barFocus:GetAttribute("tbg-bar-y"), -490)
+db.barScale = 2; NS.ApplyActiveLayout()
+expect("default spot at scale 2", NS.barFocus:GetAttribute("tbg-bar-y"), -440)
+db.barScale = 1
+db.offsetY = -50; UIParent.GetHeight = function() return 768 end; ev(NS.bar, "UI_SCALE_CHANGED"); NS.ApplyActiveLayout()
+expect("moved bar stays put", NS.barFocus:GetAttribute("tbg-bar-y"), -50)
+db.offsetY = nil; NS.ApplyActiveLayout()
+UIParent.GetHeight = nil
+-- Weapon enhancements show the learned rank: the book lists Rockbiter's
+-- ranks as 8017 then 10399 under one name.
+local BOOK = { { name = "Spell8017", spellID = 8017 }, { name = "Spell8017", spellID = 10399 } }
+local bookStub = C_SpellBook
+C_SpellBook = setmetatable({
+  GetNumSpellBookSkillLines = function() return 1 end,
+  GetSpellBookSkillLineInfo = function() return { itemIndexOffset = 0, numSpellBookItems = #BOOK } end,
+  GetSpellBookItemInfo = function(i) local b = BOOK[i]; return b and { itemType = 1, name = b.name, spellID = b.spellID, actionID = 8017 } end,
+}, { __index = bookStub })
+db.weaponEnhancement = 8017; db.showWeaponButton = true; NS.UpdateLayout()
+expect("weapon button shows learned rank", NS.enhancementButton.spellID, 10399)
+expect("weapon choice shows learned rank", NS.enhancementButton.flyout.buttons[1].spellID, 10399)
+expect("weapon pick still keyed by base ID", NS.enhancementButton.flyout.buttons[1].choiceKey, 8017)
+expect("weapon flyout tooltip rank", NS.enhancementButton.knownIDs["Spell8017"], 10399)
+C_SpellBook = bookStub; NS.UpdateLayout()
 -- Cast of a totem syncs its element.
 ev(NS.bar, "UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 8071); print("cast sync ok")
 ev(NS.bar, "SPELL_UPDATE_COOLDOWN"); print("cooldown event ok")

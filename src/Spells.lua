@@ -26,9 +26,11 @@ function ns.SpellIcon(spell)
     return spell and Readable(C_Spell.GetSpellTexture(spell))
 end
 
--- The spellbook as a set of spell names. Totem and weapon spells have ranks:
--- the book can hold a higher rank under another spell ID than the one in
--- Definitions.lua, so learned spells are also matched by name.
+-- The spellbook by spell name: { [name] = the learned spell's ID }. Totem
+-- and weapon spells have ranks: the book holds the learned rank under
+-- another spell ID than the one in Definitions.lua, so learned spells are
+-- matched by name. A name listed more than once (a rank per entry) keeps
+-- the last, the highest rank. true when the ID can't be read.
 function ns.ReadSpellbook()
     local names = {}
     local bank, spellType = Enum.SpellBookSpellBank.Player, Enum.SpellBookItemType.Spell
@@ -38,7 +40,7 @@ function ns.ReadSpellbook()
         for index = first + 1, first + (skill and skill.numSpellBookItems or 0) do
             local item = C_SpellBook.GetSpellBookItemInfo(index, bank)
             local name = item and item.itemType == spellType and Readable(item.name)
-            if name then names[name] = true end
+            if name then names[name] = Readable(item.spellID or item.actionID) or true end
         end
     end
     return names
@@ -50,6 +52,14 @@ function ns.LearnedSpellName(spellbook, spellID)
     local name = ns.SpellName(spellID)
     if not name then return nil end
     if spellbook[name] or C_SpellBook.IsSpellKnownOrInSpellBook(spellID) then return name end
+end
+
+-- The learned rank's spell ID for a spell in Definitions.lua (its tooltip
+-- and icon show that rank), or the given ID when the book doesn't say.
+function ns.LearnedRankID(spellbook, spellID)
+    local name = ns.SpellName(spellID)
+    local learned = name and spellbook[name]
+    return type(learned) == "number" and learned or spellID
 end
 
 -- The learned totems of an element, in the game's order: what Blizzard's

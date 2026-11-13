@@ -781,7 +781,8 @@ CreateChoiceFlyout(ns.enhancementButton, "TotemBarForGamepadWeaponFlyout", "Tote
     function(spellID, spell)
         TotemBarForGamepadDB.weaponEnhancement = spellID
         ns.enhancementButton.chosenSpell = spell
-        ns.enhancementButton.icon:SetTexture(ns.SpellIcon(spellID) or QUESTION_MARK_ICON)
+        ns.enhancementButton.icon:SetTexture(ns.SpellIcon(ns.enhancementButton.knownIDs[spell] or spellID)
+            or QUESTION_MARK_ICON)
         ns.UpdateSpellCooldowns()
         GameTooltip:Hide()
         ns.UpdateMacroIcons()
@@ -825,17 +826,21 @@ ns.weaponProxy = CreateCastProxy("TotemBarForGamepadCastWeapon")
 SecureHandlerSetFrameRef(ns.enhancementButton.flyout, "cast-proxy", ns.weaponProxy)
 
 -- The weapon enhancement button and its flyout: every learned enhancement,
--- in Definitions.lua's order. The pick is kept by spell ID; one no longer
--- known falls back to the first known. The macro proxy casts the pick
+-- in Definitions.lua's order. The pick is kept by its Definitions.lua spell
+-- ID; one no longer known falls back to the first known. Tooltips and icons
+-- show the learned rank (knownIDs: name -> that rank's spell ID). The macro proxy casts the pick
 -- whether or not the button is on the bar. Returns whether the button shows.
 local function UpdateEnhancementButton(spellbook, isVertical)
     local button, db = ns.enhancementButton, TotemBarForGamepadDB
-    local learned, nameOf = {}, {}
+    local learned, nameOf, rankOf = {}, {}, {}
+    button.knownIDs = {}
     for _, spellID in ipairs(ns.imbueSpells) do
         local name = ns.LearnedSpellName(spellbook, spellID)
         if name then
             learned[#learned + 1] = spellID
             nameOf[spellID] = name
+            rankOf[spellID] = ns.LearnedRankID(spellbook, spellID)
+            button.knownIDs[name] = rankOf[spellID]
         end
     end
     if learned[1] and not nameOf[db.weaponEnhancement] then db.weaponEnhancement = learned[1] end
@@ -850,7 +855,8 @@ local function UpdateEnhancementButton(spellbook, isVertical)
     button:SetAttribute("type1", spell and "spell" or nil)
     button:SetAttribute("spell1", spell)
     button:SetAttribute("tbg-assigned-key", spell and pick or nil)
-    button.icon:SetTexture(spell and ns.SpellIcon(pick) or QUESTION_MARK_ICON)
+    button.spellID = spell and rankOf[pick]
+    button.icon:SetTexture(spell and ns.SpellIcon(rankOf[pick]) or QUESTION_MARK_ICON)
     button:SetShown(spell ~= nil)
 
     local flyout = button.flyout
@@ -859,11 +865,11 @@ local function UpdateEnhancementButton(spellbook, isVertical)
     LayoutTotemFlyout(flyout, button, FlyoutDirection(isVertical), button.choiceCount)
     for index, choice in ipairs(flyout.buttons) do
         local spellID = shown and learned[index] or nil
-        choice.choiceKey, choice.spellID = spellID, spellID
+        choice.choiceKey, choice.spellID = spellID, spellID and rankOf[spellID]
         choice.spellName = spellID and nameOf[spellID]
         choice:SetAttribute("choice-key", spellID)
         choice:SetAttribute("choice-spell", choice.spellName)
-        choice.icon:SetTexture(spellID and ns.SpellIcon(spellID) or QUESTION_MARK_ICON)
+        choice.icon:SetTexture(spellID and ns.SpellIcon(rankOf[spellID]) or QUESTION_MARK_ICON)
         choice.icon:SetTexCoord(0, 1, 0, 1)
         choice:SetShown(spellID ~= nil)
     end
@@ -1148,6 +1154,8 @@ function ns.UpdateLayout()
 
     local order = BarOrder(shownSlots, summonShown, recallShown, enhancementShown)
     ArrangeBar(order, isVertical)
+    -- The default spot depends on the bar's height (EditMode.lua).
+    if db.offsetY == nil and ns.ApplyBarPosition then ns.ApplyBarPosition() end
     LayoutTotemFlyout(ns.summonButton.flyout, ns.summonButton, FlyoutDirection(isVertical), ns.summonButton.choiceCount)
     UpdateBarVisibility(shownSlots[1] ~= nil)
 

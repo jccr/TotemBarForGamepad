@@ -8,10 +8,16 @@ if not ns.isShaman then return end
 ns.DISPLAY_NAME = "Totem Bar for Gamepad"
 ns.NO_TOTEM_TEXT = MULTI_CAST_TOOLTIP_NO_TOTEM or "No Totem"
 
+-- The bar's default spot: centered, its bottom edge this share of the
+-- screen's height above the bottom of the screen (38 units on the usual
+-- 768-unit-tall screen), so it lands in the same place on any screen size,
+-- UI scale, bar scale or orientation.
+ns.BAR_DEFAULT_BOTTOM_SHARE = 0.05
+
 ns.defaults = {
-    -- Bar center offset from screen center, in screen (UIParent) units.
+    -- Bar center offset from screen center, in screen (UIParent) units. No
+    -- offsetY: the default spot (ns.BAR_DEFAULT_BOTTOM_SHARE).
     offsetX = 0,
-    offsetY = -170,
     barScale = 1.0,
     -- Sound alerts (SoundAlerts.lua): a Cooldown Manager sound's enum name,
     -- "TextToSpeech" or "None"; lead times in seconds.
