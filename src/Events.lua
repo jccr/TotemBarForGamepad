@@ -137,6 +137,11 @@ on.ACTIONBAR_UPDATE_USABLE = on.SPELL_UPDATE_USABLE
 on.UPDATE_SHAPESHIFT_FORM = on.SPELL_UPDATE_USABLE
 on.UNIT_POWER_UPDATE = on.SPELL_UPDATE_USABLE
 
+-- The game's totem bar is ready (Blizzard's totem bar redraws on this too).
+function on.UPDATE_MULTI_CAST_ACTIONBAR()
+    FollowTotemBar(nil)
+end
+
 -- The game's totem bar slots are action slots: follow changes made there.
 -- The slot argument is 0 or nil when any slot may have changed.
 function on.ACTIONBAR_SLOT_CHANGED(action)

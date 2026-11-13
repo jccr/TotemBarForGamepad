@@ -329,24 +329,37 @@ local function ReadTotemBarKey(page, elem)
     end
 end
 
--- Adopts the game's choices into each Call's saved set. slots: { [elem] = page },
--- or nil for every slot of every Call. Returns true if the current Call changed.
--- Reading the bar works whether or not Blizzard's totem bar is shown: these
--- are the game's action slots, not its frames.
+-- Whether the game has sent the action bars yet: before it has, every slot
+-- reads empty. Any action on any bar means they're in.
+local function ActionBarsLoaded()
+    if not HasAction then return false end
+    for action = 1, TOTEM_BAR_START + 4 * #ns.callSpells do
+        local has = HasAction(action)
+        if ns.IsSecretValue(has) then return false end
+        if has then return true end
+    end
+    return false
+end
+
+-- Adopts the game's choices into each Call's saved set, an empty slot as
+-- "No Totem". slots: { [elem] = page }, or nil for every slot of every Call.
+-- Returns true if any Call's set changed. Reading the bar works whether or
+-- not Blizzard's totem bar is shown: these are the game's action slots, not
+-- its frames.
 function ns.FollowTotemBar(slots)
     if not TotemBarForGamepadDB or not ns.callWriters[1] then return false end
+    -- A whole-bar read before the bars have loaded would see them all empty.
+    local trustEmpty = slots ~= nil or ActionBarsLoaded()
     local changed = false
     for page = 1, #ns.callWriters do
         for elem = 1, 4 do
             if slots == nil or slots[elem] == page then
                 local key = ReadTotemBarKey(page, elem)
-                -- A whole-bar read (login) can run before action data loads, which
-                -- looks empty: only a reported change of that slot clears a choice.
-                if key == "none" and slots == nil then key = nil end
+                if key == "none" and not trustEmpty then key = nil end
                 local set = TotemBarForGamepadDB.callSets[page]
                 if key and set and set[elem] ~= key then
                     set[elem] = key
-                    if page == TotemBarForGamepadDB.activeCall then changed = true end
+                    changed = true
                 end
             end
         end
@@ -1047,8 +1060,10 @@ local function SetTotemChoice(choice, entry, elem, writeMacro)
     choice:SetShown(entry ~= nil)
 end
 
--- A totem slot for its element: every Call's pick (a pick that's no longer
--- learned becomes the element's first totem), what it casts now, its macro
+-- A totem slot for its element: every Call's pick (the game's totem bar, as
+-- followed by ns.FollowTotemBar; no pick, or one that isn't learned, shows
+-- as "No Totem", since the game's bar would drop nothing; an unlearned pick
+-- stays saved, in case the spellbook just hasn't loaded), what it casts now, its macro
 -- proxy, the secure references its flyout and the Call switcher use, and
 -- its flyout: "No Totem" next to the button, then the learned totems in the
 -- game's order (as on Blizzard's totem bar).
@@ -1060,24 +1075,20 @@ local function UpdateTotemSlot(slotIndex, totems, shown, isVertical)
     slot.knownIDs = {}
     for _, totem in ipairs(totems) do slot.knownIDs[totem.name] = totem.id end
 
+    local currentKey
     for call = 1, #ns.callSpells do
-        local set = db.callSets[call]
-        local key = set[elem]
-        if key ~= "none" and not slot.knownIDs[key] then
-            -- Not learned (or no pick yet): the element's first totem, if any.
-            key = totems[1] and totems[1].name
-            set[elem] = key or set[elem]
-        end
+        local key = db.callSets[call][elem]
+        if key ~= "none" and not slot.knownIDs[key] then key = "none" end
+        if call == current then currentKey = key end
         local spell = key ~= "none" and key or nil
         slot.pageSpellNames[call] = spell
         slot:SetAttribute("page" .. call .. "-spell", spell)
         slot:SetAttribute("page" .. call .. "-key", key)
         WriteCallSlot(call, elem, spell and slot.knownIDs[spell])
     end
-    local key = db.callSets[current][elem]
     slot.chosenSpell = slot.pageSpellNames[current]
     slot:SetAttribute("spell1", slot.chosenSpell)
-    slot:SetAttribute("tbg-assigned-key", (slot.chosenSpell or key == "none") and key or nil)
+    slot:SetAttribute("tbg-assigned-key", currentKey)
     SetTotemArt(slot.border, SLOT_BORDER_COORDS[elem])
 
     local proxy = ns.castProxies[elem]

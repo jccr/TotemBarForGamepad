@@ -76,6 +76,7 @@ function ClearOverrideBindings() end
 
 ACTIONS = {}
 function GetActionInfo(a) local v = ACTIONS[a] if v then return "spell", v end end
+function HasAction(a) return ACTIONS[a] ~= nil end
 NUM_ACTIONBAR_BUTTONS = 12
 GetBindingText = function(k) return "|A:Gamepad_Ltr_A_64:24:24|a" end
 UISpecialFrames = {}
@@ -202,6 +203,32 @@ print("follow fire:", db.activeCallSet[1])
 ACTIONS[110] = 3599; local before = db.activeCallSet[2]; ev(NS.bar, "ACTIONBAR_SLOT_CHANGED", 110)
 print("wrong-element ignored:", db.activeCallSet[2] == before)
 ACTIONS[109] = nil; ev(NS.bar, "ACTIONBAR_SLOT_CHANGED", 109); print("slot clear follows:", db.activeCallSet[1])
+-- What TBG shows is what Call drops: no made-up picks, and a whole-bar read
+-- trusts empty slots only once the game has sent the action bars.
+local function expect(label, got, want)
+  if got ~= want then print("FAIL " .. label .. ": got " .. tostring(got) .. ", want " .. tostring(want))
+  else print("ok " .. label) end
+end
+db.callSets[1][2] = nil; NS.UpdateLayout()
+local earthIdx; for i = 1, 4 do if db.elementOrder[i] == 2 then earthIdx = i end end
+expect("no pick shows No Totem", NS.slots[earthIdx]:GetAttribute("spell1"), nil)
+expect("no pick key", NS.slots[earthIdx]:GetAttribute("tbg-assigned-key"), "none")
+db.callSets[1][2] = "Spell8071"; NS.UpdateLayout()
+for a in pairs(ACTIONS) do ACTIONS[a] = nil end
+ev(NS.bar, "UPDATE_MULTI_CAST_ACTIONBAR")
+expect("bars not loaded keeps pick", db.callSets[1][2], "Spell8071")
+ACTIONS[1] = 403
+ev(NS.bar, "UPDATE_MULTI_CAST_ACTIONBAR")
+expect("loaded empty slot clears pick", db.callSets[1][2], "none")
+expect("cleared pick casts nothing", NS.slots[earthIdx]:GetAttribute("spell1"), nil)
+ACTIONS[110] = 8075; ev(NS.bar, "UPDATE_MULTI_CAST_ACTIONBAR")
+expect("loaded slot adopted", db.callSets[1][2], "Spell8075")
+local savedLists = LISTS; LISTS = { {}, {}, {}, {} }; NS.UpdateLayout()
+expect("unlearned pick stays saved", db.callSets[1][2], "Spell8075")
+expect("unlearned pick casts nothing", NS.slots[earthIdx]:GetAttribute("spell1"), nil)
+LISTS = savedLists; NS.UpdateLayout()
+expect("relearned pick casts", NS.slots[earthIdx]:GetAttribute("spell1"), "Spell8075")
+ACTIONS[1] = nil; ACTIONS[110] = nil
 -- Cast of a totem syncs its element.
 ev(NS.bar, "UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 8071); print("cast sync ok")
 ev(NS.bar, "SPELL_UPDATE_COOLDOWN"); print("cooldown event ok")
