@@ -1,0 +1,9 @@
+<Bindings>
+	<Binding name="CLICK TotemBarForGamepadSlot1:LeftButton" header="TOTEMBARFORGAMEPAD" category="ADDONS"/>
+	<Binding name="CLICK TotemBarForGamepadSlot2:LeftButton" category="ADDONS"/>
+	<Binding name="CLICK TotemBarForGamepadSlot3:LeftButton" category="ADDONS"/>
+	<Binding name="CLICK TotemBarForGamepadSlot4:LeftButton" category="ADDONS"/>
+	<Binding name="CLICK TotemBarForGamepadSummon:LeftButton" category="ADDONS"/>
+	<Binding name="CLICK TotemBarForGamepadRecall:LeftButton" category="ADDONS"/>
+	<Binding name="CLICK TotemBarForGamepadWeaponEnhancement:LeftButton" category="ADDONS"/>
+</Bindings>

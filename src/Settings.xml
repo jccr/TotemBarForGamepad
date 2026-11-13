@@ -1,0 +1,7 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<!-- Row in Options > AddOns > TotemBarForGamepad holding the draggable gamepad
+	     macro icons (filled in from Settings.lua). -->
+	<Frame name="TotemBarForGamepadMacroRowTemplate" virtual="true">
+		<Size x="600" y="48"/>
+	</Frame>
+</Ui>

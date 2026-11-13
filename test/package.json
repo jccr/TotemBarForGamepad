@@ -1,0 +1,17 @@
+{
+  "name": "tbg-testing",
+  "version": "1.0.0",
+  "description": "Offline tests for Totem Bar for Gamepad (fengari + luaparse)",
+  "scripts": {
+    "test": "./run-all.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "fengari": "^0.1.4",
+    "luaparse": "^0.3.1"
+  },
+  "private": true
+}

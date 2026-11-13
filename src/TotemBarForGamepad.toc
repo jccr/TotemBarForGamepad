@@ -1,0 +1,28 @@
+## Interface: 16001
+## Title: Totem Bar for Gamepad
+## Notes: Shaman totem bar with totem timers, Totem Bar Focus for gamepads, and Edit Mode support
+## Author: jccr
+## Version: 0.1.0
+## SavedVariablesPerCharacter: TotemBarForGamepadDB
+
+# GamepadKit: embedded gamepad library (generic, no TotemBarForGamepad code)
+GamepadKit\GamepadKit.lua
+GamepadKit\Glyphs.lua
+GamepadKit\ActionButtons.lua
+GamepadKit\FocusNav.lua
+GamepadKit\BindPrompt.lua
+GamepadKit\SecureGrid.lua
+
+# TotemBarForGamepad
+Definitions.lua
+Spells.lua
+SoundAlerts.lua
+TotemBar.lua
+EditMode.lua
+TotemBarFocus.lua
+TotemTimers.lua
+Settings.xml
+Settings.lua
+GamepadMacros.lua
+Guide.lua
+Events.lua
