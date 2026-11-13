@@ -121,12 +121,19 @@ function ns.QuietTotemAlerts(seconds)
     quietUntil = math.max(quietUntil, GetTime() + seconds)
 end
 
+-- The game can report the totems gone a moment before the Totemic Recall
+-- that took them, so a "totem gone" alert waits that long for a recall.
+local GONE_ALERT_DELAY = 0.3
+
 function ns.AlertTotemExpiring(spellName)
     if DB() then ns.PlayAlert(DB().alertTotemExpiring, spellName) end
 end
 
 function ns.AlertTotemExpired(spellName)
-    if DB() and GetTime() >= quietUntil then ns.PlayAlert(DB().alertTotemExpired, spellName) end
+    local goneAt = GetTime()
+    C_Timer.After(GONE_ALERT_DELAY, function()
+        if DB() and goneAt >= quietUntil then ns.PlayAlert(DB().alertTotemExpired, spellName) end
+    end)
 end
 
 -- The weapon enhancement warning: once per application, when its time left

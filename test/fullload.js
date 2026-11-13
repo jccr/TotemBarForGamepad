@@ -22,7 +22,15 @@ InCombatLockdown = function() return false end
 GetTime = function() return 100 end
 issecretvalue = function() return false end
 C_Texture = { GetAtlasInfo = function() return {} end }
-C_Timer = { NewTicker = function() end, After = function() end }
+-- After: queued; RunTimers() runs whatever is due by GetTime().
+TIMERS = {}
+C_Timer = { NewTicker = function() end, After = function(delay, fn) TIMERS[#TIMERS + 1] = { at = GetTime() + delay, fn = fn } end }
+function RunTimers()
+  local due, later = {}, {}
+  for _, t in ipairs(TIMERS) do if t.at <= GetTime() then due[#due + 1] = t else later[#later + 1] = t end end
+  TIMERS = later
+  for _, t in ipairs(due) do t.fn() end
+end
 C_ActionBar = { GetMultiCastBarIndex = function() return 10 end }
 -- Settings API + key bindings (recording, no UI).
 SETTINGS_LOG = {}
@@ -281,9 +289,23 @@ print("play:", table.concat(PLAYED, " | "))
 PLAYED = {}
 local slot = NS.slots[1]; slot.active = true; slot.totemName = "Stoneskin Totem"
 GetTime = function() return 1000 end
-NS.EndTotemTimer(1); print("expired alert:", table.concat(PLAYED, " | "))
-PLAYED = {}; slot.active = true; NS.QuietTotemAlerts(2); NS.EndTotemTimer(1); print("expired while quiet:", #PLAYED)
-PLAYED = {}; NS.EndTotemTimer(1); print("clearing an inactive slot:", #PLAYED)
+TIMERS = {}
+local function after(seconds) local now = GetTime() + seconds; GetTime = function() return now end; RunTimers() end
+NS.EndTotemTimer(1); print("expired alert waits:", #PLAYED)
+after(0.5); print("expired alert:", table.concat(PLAYED, " | "))
+PLAYED = {}; slot.active = true; NS.QuietTotemAlerts(2); NS.EndTotemTimer(1); after(0.5); print("expired while quiet:", #PLAYED)
+PLAYED = {}; NS.EndTotemTimer(1); after(0.5); print("clearing an inactive slot:", #PLAYED)
+-- Totemic Recall reported just after its totems were reported gone: no alert.
+after(10); PLAYED = {}; slot.active = true; NS.EndTotemTimer(1); after(0.1)
+NS.bar.scripts.OnEvent(NS.bar, "UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 36936); after(0.5)
+print(#PLAYED == 0 and "ok recall after gone is quiet" or "FAIL recall after gone played: " .. table.concat(PLAYED, " | "))
+-- Pressing TBG's Recall button (in combat the cast can't be read): no alert.
+after(10); PLAYED = {}; slot.active = true; NS.recallButton.scripts.PreClick(NS.recallButton, "LeftButton", true)
+NS.EndTotemTimer(1); after(0.5)
+print(#PLAYED == 0 and "ok recall button is quiet" or "FAIL recall button played: " .. table.concat(PLAYED, " | "))
+-- A totem that runs out on its own still alerts.
+after(10); PLAYED = {}; slot.active = true; NS.EndTotemTimer(1); after(0.5)
+print(#PLAYED > 0 and "ok expiry alerts" or "FAIL expiry gave no alert")
 -- Weapon: warns once on dropping to the lead time, re-arms above it.
 PLAYED = {}
 for _, r in ipairs({ 300, 120, 61, 60, 59, 30, 0, 1800, 59 }) do NS.CheckWeaponAlert(r, "Flametongue Weapon") end
@@ -356,7 +378,7 @@ local earth; for i = 1, 4 do if db.elementOrder[i] == 2 then earth = NS.slots[i]
 NS.ReadAllTotems(); print("totem timer:", earth.active, earth.timerStart, earth.timerDuration, earth.totemName)
 GetTotemInfo = function() return false, "", 0, 0 end; PLAYED = {}; GetTime = function() return 5000 end
 NS.ReadTotem(2, true); print("kept after cast:", earth.active)
-NS.ReadTotem(2); print("ended:", earth.active, #PLAYED > 0)
+NS.ReadTotem(2); GetTime = function() return 5001 end; RunTimers(); print("ended:", earth.active, #PLAYED > 0)
 -- Gamepad macros dialog: opening it closes Options first (no transition back
 -- to the Game Menu), then shows once Options has hidden.
 local closedWith

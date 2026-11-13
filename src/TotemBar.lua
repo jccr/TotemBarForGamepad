@@ -765,6 +765,10 @@ ns.recallButton = CreateBarButton("TotemBarForGamepadRecall")
 ns.recallButton:RegisterForClicks("AnyUp", "AnyDown")
 ns.recallButton:SetScript("OnEnter", ShowBarSpellTooltip)
 ns.recallButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+-- Recalling from TBG's bar: no "totem gone" alerts. In combat the cast
+-- event can't say it was Totemic Recall, but this press can.
+-- (It acts on the press or the release, by the game's key-down setting.)
+ns.recallButton:HookScript("PreClick", function() ns.QuietTotemAlerts(2) end)
 ns.recallButton:Hide()
 
 -- The weapon enhancement button (a TBG extra, with Blizzard's neutral art).
