@@ -5,6 +5,8 @@
 A shaman totem bar for World of Warcraft (WoW Forever client) that looks and
 behaves like Blizzard's own, built for playing with a gamepad.
 
+<img src="assets/screenshots/4-selecting.jpg" alt="Choosing an Earth totem with the gamepad in Totem Bar Focus" width="640">
+
 - **Totem bar.** Blizzard's look and art, with totem timers and the weapon
   enhancement. It can hide Blizzard's Totem Bar (on by default).
 - **Totem Bar Focus.** Puts your gamepad on the totem bar: browse every
@@ -18,60 +20,44 @@ behaves like Blizzard's own, built for playing with a gamepad.
 - **Key bindings.** Totem slots, summon, recall and weapon enhancement, under
   Key Bindings → AddOns.
 
-## Repo layout
+## A quick tour
 
-```
-src/        the addon, exactly as it's installed (TOC, Lua, XML, Media/)
-  GamepadKit/   embedded, addon-agnostic gamepad library
-test/       offline test suite (see test/README.md)
-assets/     the full-size logo (the addon ships a small icon in src/Media)
-Justfile    test and build recipes
-CHANGELOG.md  what changed in each version
-.github/    the release workflow
-```
+**Set up in two steps.** The welcome guide adds Totem Bar Focus to a
+gamepad button with one press of A.
+
+<p>
+<img src="assets/screenshots/1-welcome.jpg" alt="Welcome guide: add Totem Bar Focus, place the bar" width="400">
+<img src="assets/screenshots/2-bind.jpg" alt="Bind to Action Bar prompt for the TBG Focus macro" width="400">
+</p>
+
+**Your gamepad on the totem bar.** Totem Bar Focus moves along the bar with
+the D-pad. Press A or X to cast. Open a slot to choose another totem.
+
+<img src="assets/screenshots/3-focused.jpg" alt="Totem Bar Focus on Strength of Earth Totem with its tooltip" width="640">
+
+**Timers and weapon enhancement.** See the time left on each totem. Choose
+and cast your weapon enhancement from the same bar.
+
+<img src="assets/screenshots/5-extras.jpg" alt="Totem timers and the weapon enhancement choices" width="640">
+
+**Cast directly.** Bind one macro per element, and one for your weapon
+enhancement. Each casts that slot's totem with one press.
+
+<img src="assets/screenshots/8-extra-macros.jpg" alt="Gamepad Macros dialog with the Totem Bar Focus and cast macros" width="640">
+
+**Place it in Edit Mode.** Move, scale and arrange the bar with Blizzard's
+Edit Mode.
+
+<img src="assets/screenshots/6-hud-edit-mode.jpg" alt="The bar's settings in Blizzard's HUD Edit Mode" width="640">
+
+**Options your way.** Sound alerts, Totem Bar Focus behavior, gamepad
+macros and key bindings, all in Options → AddOns.
+
+<p>
+<img src="assets/screenshots/7-options.jpg" alt="Options: general settings and sound alerts" width="400">
+<img src="assets/screenshots/7-options-2.jpg" alt="Options: Totem Bar Focus, gamepad macros and key bindings" width="400">
+</p>
 
 ## Development
 
-Requirements: [just](https://github.com/casey/just) and Node.js. Install just
-with `brew install just`.
-
-```sh
-just test     # run the offline test suite against src/
-just build    # test, then install src/ into the game's AddOns folder
-```
-
-`just build` copies `src/` to
-`/Applications/World of Warcraft/_forever_/Interface/AddOns/TotemBarForGamepad`,
-mirroring it so removed files are removed there too. If any test fails, nothing
-is copied. After a build, `/reload` in game. Saved settings are kept: they live
-in the game's `WTF` folder, not the addon folder.
-
-Edit the code in `src/` only. The installed copy is overwritten on every build.
-
-`just test path/to/addon` tests another copy, such as the installed one.
-
-## Releasing
-
-1. Add the version's section to `CHANGELOG.md` (`## 1.2.3`), written for
-   players.
-2. Set `## Version: 1.2.3` in `src/TotemBarForGamepad.toc`.
-3. Commit, tag and push:
-
-   ```sh
-   git tag -a v1.2.3 -m "Totem Bar for Gamepad 1.2.3"
-   git push origin main v1.2.3
-   ```
-
-Pushing the tag runs `.github/workflows/release.yml`. It checks the tag
-against the TOC version and the changelog, runs the tests, and publishes a
-GitHub release with `TotemBarForGamepad-1.2.3.zip` (unzips into
-`Interface/AddOns`) and that version's changelog section as the notes.
-
-## Testing
-
-The tests run the addon's real Lua outside the game. They load it into
-fengari, a Lua VM written in JS, on top of WoW API stubs and a small
-secure-environment simulator. They catch syntax errors, broken secure
-snippets, leaked globals, load errors and regressions in the gamepad logic.
-Taint, art, layout and sound still need checking in game. See
-[test/README.md](test/README.md).
+Building, testing and releasing: see [DEVELOPMENT.md](DEVELOPMENT.md).
