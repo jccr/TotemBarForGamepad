@@ -45,18 +45,7 @@ end
 local MACRO_ICON_SIZE, MACRO_ICON_GAP = 36, 6
 
 local function ShowMacroTooltip(button, reason)
-    local def = button.def
-    GameTooltip:SetOwner(button, "ANCHOR_TOP")
-    GameTooltip:SetText(def.name, 1, 1, 1)
-    GameTooltip:AddLine(def.desc:sub(1, 1):upper() .. def.desc:sub(2), nil, nil, nil, true)
-    if reason then
-        GameTooltip:AddLine(reason, 1, 0.3, 0.3, true)
-    elseif ns.GamepadKit.IsGamepadActive() then
-        GameTooltip:AddLine("Press A to bind it to a gamepad button, or drag it to an action bar.", 0.4, 1, 0.4, true)
-    else
-        GameTooltip:AddLine("Drag to an action bar, or click to pick it up.", 0.4, 1, 0.4, true)
-    end
-    GameTooltip:Show()
+    ns.ShowMacroTooltip(button, button.def, reason)
 end
 
 local function PickUp(button)
@@ -68,20 +57,7 @@ end
 -- Each icon shows what its macro shows on a bar: the selected totem (or weapon
 -- enhancement); with nothing selected, the element's "No Totem" art.
 local function RefreshMacroIcons(frame)
-    for _, button in ipairs(frame.tbgMacroButtons or {}) do
-        local def = button.def
-        local spell = ns.GetMacroSpell and ns.GetMacroSpell(def)
-        local texture = spell and ns.SpellIcon(spell)
-        if texture then
-            button.icon:SetTexture(texture)
-            button.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        elseif def.elem then
-            ns.SetElementEmptyArt(button.icon, def.elem)
-        else
-            button.icon:SetTexture(ns.SpellIcon(def.spellID) or 134400)
-            button.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        end
-    end
+    for _, button in ipairs(frame.tbgMacroButtons or {}) do ns.SetMacroIcon(button.icon, button.def) end
 end
 
 -- The row on screen, if the Options page is showing it.
@@ -303,6 +279,13 @@ function ns.RegisterOptions()
     -- Gamepad macros: drag an icon to an action bar, or click it to pick the
     -- macro up. The macro is created the first time it is used.
     Header("Gamepad Macros", "Macros for the gamepad action bar: Totem Bar Focus, and casting each slot.")
+    -- The macros dialog binds them with the gamepad (this list's navigation
+    -- can't reach the icon row). It closes Options, so LB+RB paging works.
+    if CreateSettingsButtonInitializer then
+        layout:AddInitializer(CreateSettingsButtonInitializer("Gamepad Macros", "Open", function()
+            ns.ShowMacroGuide()
+        end, "Bind each macro to a gamepad button, step by step.", true))
+    end
     local macroRow = Settings.CreateElementInitializer
         and select(2, pcall(Settings.CreateElementInitializer, "TotemBarForGamepadMacroRowTemplate", {}))
     if type(macroRow) == "table" then

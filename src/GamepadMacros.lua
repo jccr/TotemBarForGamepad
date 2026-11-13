@@ -6,6 +6,9 @@ if not ns.isShaman then return end
 -- ---------------------------------------------------------------------------
 -- Character macros that "/click" Totem Bar Focus or a cast proxy, for placing on
 -- the gamepad action bar (where its LT/LB layers keep working natively).
+-- The question-mark icon tells the game to show the macro's spell instead.
+local MACRO_DYNAMIC_ICON = 134400
+
 local macroDefs = {
     { key = "totems", name = "TBG Focus", target = "TotemBarForGamepadFocus", spellID = 66842, desc = "start or end Totem Bar Focus: your gamepad on the totem bar" },
     { key = "earth", elem = 2, name = "TBG Earth", target = "TotemBarForGamepadCastEarth", spellID = 8071, desc = "cast your Earth totem" },
@@ -19,11 +22,44 @@ local macroDefs = {
 
 ns.macroDefs = macroDefs
 
+function ns.GetMacroDef(key)
+    for _, def in ipairs(macroDefs) do
+        if def.key == key then return def end
+    end
+end
+
+-- A macro's icon as it shows on a bar: its current totem or weapon
+-- enhancement; a totem macro with "No Totem" shows the element's empty art.
+function ns.SetMacroIcon(texture, def)
+    local spell = ns.GetMacroSpell(def)
+    local icon = spell and ns.SpellIcon(spell)
+    if not icon and def.elem then
+        ns.SetElementEmptyArt(texture, def.elem)
+        return
+    end
+    texture:SetTexture(icon or ns.SpellIcon(def.spellID) or MACRO_DYNAMIC_ICON)
+    texture:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+end
+
+-- The macro's tooltip: its name, what it does, then what to do with it (or
+-- why that failed).
+function ns.ShowMacroTooltip(owner, def, reason)
+    GameTooltip:SetOwner(owner, "ANCHOR_TOP")
+    GameTooltip:SetText(def.name, 1, 1, 1)
+    GameTooltip:AddLine(def.desc:sub(1, 1):upper() .. def.desc:sub(2), nil, nil, nil, true)
+    if reason then
+        GameTooltip:AddLine(reason, 1, 0.3, 0.3, true)
+    elseif ns.GamepadKit.IsGamepadActive() then
+        GameTooltip:AddLine("Press A to bind it to a gamepad button, or drag it to an action bar.", 0.4, 1, 0.4, true)
+    else
+        GameTooltip:AddLine("Drag to an action bar, or click to pick it up.", 0.4, 1, 0.4, true)
+    end
+    GameTooltip:Show()
+end
+
 -- Finds or creates the character macro for a definition. Returns its index,
 -- or nil and a reason. Silent: it runs from the Options panel, where chat
 -- output would taint the gamepad navigation.
--- The question-mark icon tells the game to show the macro's spell instead.
-local MACRO_DYNAMIC_ICON = 134400
 
 -- Totem and weapon macros show their current spell (icon, tooltip, cooldown):
 -- "#showtooltip" plus SetMacroSpell, which UpdateMacroIcons keeps current.
@@ -131,6 +167,7 @@ end
 function ns.UpdateMacroIcons()
     -- The Options page's macro row follows the selection too.
     if ns.RefreshMacroRow then ns.RefreshMacroRow() end
+    if ns.RefreshMacroGuide then ns.RefreshMacroGuide() end
     if not (SetMacroSpell and TotemBarForGamepadDB and GetMacroIndexByName) then return end
     if InCombatLockdown() and not ns.macroSpellInCombat then
         iconsPending = true

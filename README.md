@@ -1,5 +1,7 @@
 # Totem Bar for Gamepad
 
+<img src="assets/logo.png" alt="Totem Bar for Gamepad logo" width="160">
+
 A shaman totem bar for World of Warcraft (WoW Forever client) that looks and
 behaves like Blizzard's own, built for playing with a gamepad.
 
@@ -19,9 +21,10 @@ behaves like Blizzard's own, built for playing with a gamepad.
 ## Repo layout
 
 ```
-src/        the addon, exactly as it's installed (TOC, Lua, XML)
+src/        the addon, exactly as it's installed (TOC, Lua, XML, Media/)
   GamepadKit/   embedded, addon-agnostic gamepad library
 test/       offline test suite (see test/README.md)
+assets/     the full-size logo (the addon ships a small icon in src/Media)
 Justfile    test and build recipes
 ```
 

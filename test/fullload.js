@@ -80,7 +80,8 @@ NUM_ACTIONBAR_BUTTONS = 12
 GetBindingText = function(k) return "|A:Gamepad_Ltr_A_64:24:24|a" end
 UISpecialFrames = {}
 SlashCmdList = {}
-EventRegistry = { RegisterCallback = function() end }
+CALLBACKS = {}
+EventRegistry = { RegisterCallback = function(_, event, fn) CALLBACKS[event] = fn end }
 EditModeManagerFrame = setmetatable({ attrs = {}, name = "EditModeManagerFrame" }, getmetatable(UIParent))
 hooksecurefunc = function() end
 UIDropDownMenu_Initialize = function() end
@@ -96,6 +97,7 @@ CooldownViewerSoundData = { [3] = { { soundEnum = 30, soundKitID = 316531, text 
 C_Spell = { GetSpellName = function(id) return "Spell" .. tostring(id) end, GetSpellTexture = function() return 136000 end,
   GetSpellInfo = function(id) return { name = "Spell" .. tostring(id), spellID = 1 } end }
 GetTotemInfo = function() return false, "", 0, 0 end
+function Mixin(object, ...) for _, mixin in ipairs({ ... }) do for k, v in pairs(mixin) do object[k] = v end end return object end
 function CopyTable(t) local c = {} for k, v in pairs(t) do c[k] = type(v) == "table" and CopyTable(v) or v end return c end
 wipe = function(t) for k in pairs(t) do t[k] = nil end return t end
 -- The main hand's imbue (none by default).
@@ -328,6 +330,14 @@ NS.ReadAllTotems(); print("totem timer:", earth.active, earth.timerStart, earth.
 GetTotemInfo = function() return false, "", 0, 0 end; PLAYED = {}; GetTime = function() return 5000 end
 NS.ReadTotem(2, true); print("kept after cast:", earth.active)
 NS.ReadTotem(2); print("ended:", earth.active, #PLAYED > 0)
+-- Gamepad macros dialog: opening it closes Options first (no transition back
+-- to the Game Menu), then shows once Options has hidden.
+local closedWith
+SettingsPanel = { IsShown = function() return true end, Close = function(_, skip) closedWith = skip end }
+NS.ShowMacroGuide(); local macros = NS.macroWindow
+print("macros dialog: Options closed (skip transition):", closedWith, "shown before Options hid:", macros:IsShown() == true)
+SettingsPanel.IsShown = function() return false end
+CALLBACKS["SettingsPanel.OnHide"](); print("macros dialog shown after Options hid:", macros:IsShown() == true)
 ev(NS.bar, "PLAYER_LOGOUT"); print("logout ok", db.activeCallSet == nil)
 end, debug.traceback)
 -- A Lua error fails the test (after its output so far).

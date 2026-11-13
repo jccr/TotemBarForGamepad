@@ -14,85 +14,27 @@ if not ns.isShaman then return end
 -- opening Edit Mode from addon code would taint it (and the action bars it
 -- moves). With a gamepad, A reaches it through FocusNav's secure binding.
 -- Wide layout: step 1 | step 2 side by side, the optional step 3 under both.
-local WIDTH, COLUMN_WIDTH, PADDING = 760, 330, 28
-local BUTTON_WIDTH, BUTTON_HEIGHT, ICON_SIZE, MINI_ICON = 200, 26, 56, 30
+local WIDTH, COLUMN_WIDTH, PADDING = 646, 280, 24
+local ICON_SIZE, MINI_ICON = 56, 30
 local GLYPH = 24
 
-local window = CreateFrame("Frame", "TotemBarForGamepadWelcome", UIParent)
-window:SetSize(WIDTH, 300)
-window:SetPoint("CENTER", UIParent, "CENTER", 0, 60)
-window:SetFrameStrata("DIALOG")
-window:SetClampedToScreen(true)
-window:SetMovable(true)
-window:EnableMouse(true)
-window:RegisterForDrag("LeftButton")
-window:SetScript("OnDragStart", window.StartMoving)
-window:SetScript("OnDragStop", function(self)
-    self:StopMovingOrSizing()
-    self:SetUserPlaced(false)
-end)
-window:Hide()
+local window = ns.CreateGuideWindow("TotemBarForGamepadWelcome", ns.DISPLAY_NAME, WIDTH, 140)
 ns.welcomeWindow = window
--- Escape closes it like other game windows.
-table.insert(UISpecialFrames, window:GetName())
-
--- Back to front: border, window glow (+2), title glow (+3), title plate,
--- close button (FocusNav adds the glows).
-local base = window:GetFrameLevel()
-local okBorder, border = pcall(CreateFrame, "Frame", nil, window, "DialogBorderTemplate")
-local okHeader, header = pcall(CreateFrame, "Frame", nil, window, "DialogHeaderTemplate")
-local titlePlate
-if okBorder and border and okHeader and header then
-    border:SetFrameLevel(base + 1)
-    header:SetFrameLevel(base + 4)
-    if header.Setup then header:Setup(ns.DISPLAY_NAME)
-    elseif header.Text then header.Text:SetText(ns.DISPLAY_NAME) end
-    titlePlate = header
-else
-    if okBorder and border then border:Hide() end
-    if okHeader and header then header:Hide() end
-    local chrome = CreateFrame("Frame", nil, window, "BasicFrameTemplateWithInset")
-    chrome:SetAllPoints()
-    if chrome.CloseButton then chrome.CloseButton:Hide() end
-    local title = chrome:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    title:SetPoint("TOP", window, "TOP", 0, -5)
-    title:SetText(ns.DISPLAY_NAME)
-end
-local closeButton = CreateFrame("Button", nil, window, "UIPanelCloseButton")
-closeButton:SetPoint("TOPRIGHT", window, "TOPRIGHT", -5, -5)
-closeButton:SetFrameLevel(base + 5)
-closeButton:SetScript("OnClick", function() window:Hide() end)
+local titlePlate = window.titlePlate
 
 local Kit = ns.GamepadKit
 local function Glyph(key, fallback) return Kit.Glyph(key, GLYPH, fallback) end
-
-local function Label(fontObject, text, width)
-    local fontString = window:CreateFontString(nil, "OVERLAY", fontObject)
-    if width then fontString:SetWidth(width) end
-    fontString:SetJustifyH("CENTER")
-    fontString:SetText(text)
-    return fontString
-end
-
-local function Button(name, text, template)
-    local button = CreateFrame("Button", name, window, template or "UIPanelButtonTemplate")
-    button:SetSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-    button:SetText(text)
-    return button
-end
-
-local function Divider(vertical)
-    local line = window:CreateTexture(nil, "ARTWORK")
-    line:SetColorTexture(1, 0.82, 0, 0.25)
-    if vertical then line:SetWidth(1) else line:SetHeight(1) end
-    return line
-end
+local function Label(...) return window:Label(...) end
+local function Button(...) return window:Button(...) end
+local function Divider(...) return window:Divider(...) end
+local function Below(...) return window:Below(...) end
+local BUTTON_HEIGHT = ns.GUIDE_BUTTON_HEIGHT
 
 local subtitle = Label("GameFontHighlightLarge", "Two steps and you're ready.")
-subtitle:SetPoint("TOP", window, "TOP", 0, -40)
+subtitle:SetPoint("TOP", window, "TOP", 0, -34)
 
 -- A column: big step number, title, a picture, one line of text, an action.
-local COLUMN_TOP = 78
+local COLUMN_TOP = 62
 local columnCenters = { -WIDTH / 4 + 4, WIDTH / 4 - 4 }
 local function Column(index, number, title)
     local x = columnCenters[index]
@@ -102,23 +44,20 @@ local function Column(index, number, title)
     heading:SetPoint("TOP", numeral, "BOTTOM", 0, -4)
     return x, heading
 end
-local function Below(region, anchor, gap)
-    region:SetPoint("TOP", anchor, "BOTTOM", 0, -(gap or 10))
-end
-
+-- Each step's action sits on one row, so the D-pad moves straight across:
+-- the macro icon (step 1) and Open Edit Mode (step 2). Both are anchored to
+-- the window, under the headings (number 20 + title 18 tall).
+local ACTION_ROW_TOP = COLUMN_TOP + 52
 local vertical = Divider(true)
 vertical:SetPoint("TOP", window, "TOP", 0, -COLUMN_TOP)
-vertical:SetHeight(230)
+vertical:SetHeight(200)
 
 -- Step 1: add Totem Bar Focus (its macro).
-local barFocusDef
-for _, def in ipairs(ns.macroDefs or {}) do
-    if def.key == "totems" then barFocusDef = def end
-end
-local _, heading1 = Column(1, "1", "Add Totem Bar Focus")
+local barFocusDef = ns.GetMacroDef("totems")
+Column(1, "1", "Add Totem Bar Focus")
 local macroButton = CreateFrame("Button", nil, window)
 macroButton:SetSize(ICON_SIZE, ICON_SIZE)
-Below(macroButton, heading1, 14)
+macroButton:SetPoint("TOP", window, "TOP", columnCenters[1], -ACTION_ROW_TOP)
 macroButton.icon = macroButton:CreateTexture(nil, "ARTWORK")
 macroButton.icon:SetAllPoints()
 macroButton.icon:SetTexture(barFocusDef and ns.SpellIcon(barFocusDef.spellID) or 134400)
@@ -127,28 +66,18 @@ macroButton:SetHighlightTexture(130718, "ADD") -- Interface\Buttons\ButtonHiligh
 macroButton:RegisterForClicks("LeftButtonUp")
 macroButton:RegisterForDrag("LeftButton")
 local macroName = Label("GameFontNormal", barFocusDef and barFocusDef.name or "")
-Below(macroName, macroButton, 6)
+Below(macroName, macroButton, 4)
 local text1 = Label("GameFontHighlightMedium", "Puts your gamepad on the totem bar.", COLUMN_WIDTH)
-Below(text1, macroName, 12)
+Below(text1, macroName, 8)
 local bindLine = Label("GameFontHighlightLarge", Glyph("PAD1", "A") .. "  Bind to a button")
-Below(bindLine, text1, 14)
+Below(bindLine, text1, 10)
 local dragLine = Label("GameFontDisable", "or drag it with the mouse")
-Below(dragLine, bindLine, 6)
+Below(dragLine, bindLine, 4)
 
 local function ShowMacroTooltip(reason)
-    if not barFocusDef then return end
-    GameTooltip:SetOwner(macroButton, "ANCHOR_RIGHT")
-    GameTooltip:SetText(barFocusDef.name, 1, 1, 1)
-    GameTooltip:AddLine(barFocusDef.desc:sub(1, 1):upper() .. barFocusDef.desc:sub(2), nil, nil, nil, true)
-    if reason then
-        GameTooltip:AddLine(reason, 1, 0.3, 0.3, true)
-    else
-        GameTooltip:AddLine("Drag to an action bar, or click to pick it up.", 0.4, 1, 0.4, true)
-    end
-    GameTooltip:Show()
+    ns.ShowMacroTooltip(macroButton, barFocusDef, reason)
 end
 local function PickUpMacro()
-    if not barFocusDef then return end
     local ok, reason = ns.PickupGamepadMacro(barFocusDef)
     if not ok then ShowMacroTooltip(reason) end
 end
@@ -157,13 +86,22 @@ macroButton:SetScript("OnDragStart", PickUpMacro)
 macroButton:SetScript("OnEnter", function() ShowMacroTooltip() end)
 macroButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
--- Step 2: place the bar. The picture is a little totem bar (each element's
--- empty-slot art, in the bar's order).
-local _, heading2 = Column(2, "2", "Place the bar")
+-- Step 2: place the bar. Open Edit Mode, level with the macro icon, then a
+-- little totem bar (each element's empty-slot art, in the bar's order).
+Column(2, "2", "Place the bar")
+-- Secure template last, so its click handler is the one that runs. A
+-- protected frame can't anchor to text, so it's anchored to the window.
+local editModeButton = Button("TotemBarForGamepadWelcomeEditMode", "Open Edit Mode",
+    "UIPanelButtonTemplate, SecureActionButtonTemplate")
+editModeButton:SetPoint("CENTER", window, "TOP", columnCenters[2], -(ACTION_ROW_TOP + ICON_SIZE / 2))
+window.editModeButton = editModeButton
+editModeButton:RegisterForClicks("AnyUp", "AnyDown")
+editModeButton:SetAttribute("type", "macro")
+editModeButton:SetAttribute("macrotext", "/editmode")
 local miniBar = CreateFrame("Frame", nil, window)
 local order = ns.ELEMENT_ORDER or { 2, 1, 3, 4 }
-miniBar:SetSize(#order * MINI_ICON + (#order - 1) * 6, ICON_SIZE)
-Below(miniBar, heading2, 14)
+miniBar:SetSize(#order * MINI_ICON + (#order - 1) * 6, MINI_ICON)
+miniBar:SetPoint("TOP", window, "TOP", columnCenters[2], -(ACTION_ROW_TOP + ICON_SIZE + 10))
 for i, elem in ipairs(order) do
     local icon = miniBar:CreateTexture(nil, "ARTWORK")
     icon:SetSize(MINI_ICON, MINI_ICON)
@@ -171,37 +109,40 @@ for i, elem in ipairs(order) do
     ns.SetElementEmptyArt(icon, elem)
 end
 local barName = Label("GameFontNormal", ns.DISPLAY_NAME)
-Below(barName, miniBar, 6)
+Below(barName, miniBar, 4)
 local text2 = Label("GameFontHighlightMedium", "Select it in Edit Mode and drag it into place.", COLUMN_WIDTH)
-Below(text2, barName, 12)
--- Secure template last, so its click handler is the one that runs.
-local editModeButton = Button("TotemBarForGamepadWelcomeEditMode", "Open Edit Mode",
-    "UIPanelButtonTemplate, SecureActionButtonTemplate")
--- A protected frame can't anchor to text, so it sits at the column's foot,
--- anchored to the window (OPTIONAL_TOP: where the optional row begins).
-local OPTIONAL_TOP = COLUMN_TOP + 250
-editModeButton:SetPoint("BOTTOM", window, "TOP", columnCenters[2], -(OPTIONAL_TOP - 22))
-window.editModeButton = editModeButton
-editModeButton:RegisterForClicks("AnyUp", "AnyDown")
-editModeButton:SetAttribute("type", "macro")
-editModeButton:SetAttribute("macrotext", "/editmode")
+Below(text2, barName, 8)
 
--- Step 3 (optional), under both: the options.
+local OPTIONAL_TOP = COLUMN_TOP + 222
+
+-- Step 3 (optional), under both: a heading line, then one button under each
+-- step (Gamepad Macros under the macro, Options under Edit Mode), so the
+-- D-pad moves down each column. Done under everything.
 local horizontal = Divider(false)
 horizontal:SetPoint("TOPLEFT", window, "TOPLEFT", PADDING, -OPTIONAL_TOP)
 horizontal:SetPoint("TOPRIGHT", window, "TOPRIGHT", -PADDING, -OPTIONAL_TOP)
 local optionalLabel = Label("GameFontNormalLarge", "3  Optional")
-optionalLabel:SetPoint("TOPLEFT", window, "TOPLEFT", PADDING + 8, -(OPTIONAL_TOP + 18))
-optionalLabel:SetJustifyH("LEFT")
-local text3 = Label("GameFontHighlightMedium", "Tune alerts, focus behavior and key bindings.")
-text3:SetPoint("LEFT", optionalLabel, "RIGHT", 16, 0)
-text3:SetJustifyH("LEFT")
+local text3 = Label("GameFontHighlightMedium", "More macros, alerts and options.")
+-- The two read as one centered line.
+local OPTIONAL_GAP = 16
+local optionalLine = CreateFrame("Frame", nil, window)
+optionalLine:SetSize(1, 20)
+optionalLine:SetPoint("TOP", window, "TOP", 0, -(OPTIONAL_TOP + 14))
+optionalLabel:SetPoint("LEFT", optionalLine, "LEFT")
+text3:SetPoint("LEFT", optionalLabel, "RIGHT", OPTIONAL_GAP, 0)
+optionalLine:SetScript("OnShow", function(self)
+    self:SetWidth(optionalLabel:GetStringWidth() + OPTIONAL_GAP + text3:GetStringWidth())
+end)
+local OPTIONAL_BUTTONS_TOP = OPTIONAL_TOP + 44
+local macrosButton = Button(nil, "Gamepad Macros")
+macrosButton:SetPoint("TOP", window, "TOP", columnCenters[1], -OPTIONAL_BUTTONS_TOP)
 local optionsButton = Button(nil, "Open Options")
-optionsButton:SetPoint("TOPRIGHT", window, "TOPRIGHT", -(PADDING + 8), -(OPTIONAL_TOP + 14))
+optionsButton:SetPoint("TOP", window, "TOP", columnCenters[2], -OPTIONAL_BUTTONS_TOP)
 
+local DONE_TOP = OPTIONAL_BUTTONS_TOP + BUTTON_HEIGHT + 16
 local doneButton = Button(nil, DONE or "Done")
-doneButton:SetPoint("TOP", window, "TOP", 0, -(OPTIONAL_TOP + 64))
-window:SetHeight(OPTIONAL_TOP + 64 + BUTTON_HEIGHT + PADDING)
+doneButton:SetPoint("TOP", window, "TOP", 0, -DONE_TOP)
+window:SetHeight(DONE_TOP + BUTTON_HEIGHT + PADDING)
 
 -- ---------------------------------------------------------------------------
 -- Showing and closing
@@ -219,7 +160,11 @@ end)
 doneButton:SetScript("OnClick", function() window:Hide() end)
 optionsButton:SetScript("OnClick", function()
     window:Hide()
-    if ns.OpenSettings then ns.OpenSettings() end
+    ns.OpenSettings()
+end)
+macrosButton:SetScript("OnClick", function()
+    window:Hide()
+    ns.ShowMacroGuide()
 end)
 
 if EventRegistry and EventRegistry.RegisterCallback then
@@ -247,7 +192,7 @@ local function ResumeGuide()
     end
 end
 local function BindBarFocusMacro()
-    if not barFocusDef or InCombatLockdown() then return end
+    if InCombatLockdown() then return end
     pausedForEditMode = true
     window:Hide()
     local opened, reason = ns.BindGamepadMacro(barFocusDef, ResumeGuide)
@@ -262,7 +207,7 @@ end
 function ns.ShowWelcome()
     if InCombatLockdown() then return end
     pausedForEditMode = false
-    if barFocusDef then ns.EnsureGamepadMacro(barFocusDef) end
+    ns.EnsureGamepadMacro(barFocusDef)
     window:Show()
 end
 
@@ -274,8 +219,12 @@ function ns.MaybeShowWelcome()
     end)
 end
 
--- Gamepad: D-pad moves through the steps in order (the macro, Edit Mode,
--- Options, Done), A uses them, B closes.
+-- Gamepad: a 2x2 grid over Done.
+--   [macro]          -> [Open Edit Mode]
+--   [Gamepad Macros] -> [Open Options]
+--             [Done]
+-- Left/Right across a row, Up/Down a column, Down from the bottom row to
+-- Done (and Up from Done back to it). A uses them, B closes.
 -- Bindings only: LB/RB (gamepad bar paging), the triggers and the sticks
 -- keep working while the guide is up.
 local nav = ns.GamepadKit.CreateFocusNavigator(window, {
@@ -289,8 +238,12 @@ local nav = ns.GamepadKit.CreateFocusNavigator(window, {
 local bindControl = CreateFrame("Button", nil, window)
 bindControl:SetScript("OnClick", BindBarFocusMacro)
 nav:AddItem({ kind = "button", anchor = macroButton, offset = 2, control = bindControl,
+    neighbors = { PADDRIGHT = 2, PADDDOWN = 3, PADDUP = 5 },
     label = type(CONTEXT_ACTION_LABEL_BIND_TO_GAMEPAD_ACTION_BAR) == "string" and CONTEXT_ACTION_LABEL_BIND_TO_GAMEPAD_ACTION_BAR or "Bind" })
 nav:AddItem({ kind = "button", anchor = editModeButton, offset = 2, label = "Open",
-    secureButton = editModeButton:GetName() })
-nav:AddItem({ kind = "button", anchor = optionsButton, offset = 2, label = "Open", control = optionsButton })
-nav:AddItem({ kind = "close", anchor = doneButton, offset = 2 })
+    secureButton = editModeButton:GetName(), neighbors = { PADDLEFT = 1, PADDDOWN = 4, PADDUP = 5 } })
+nav:AddItem({ kind = "button", anchor = macrosButton, offset = 2, label = "Open", control = macrosButton,
+    neighbors = { PADDRIGHT = 4, PADDUP = 1, PADDDOWN = 5 } })
+nav:AddItem({ kind = "button", anchor = optionsButton, offset = 2, label = "Open", control = optionsButton,
+    neighbors = { PADDLEFT = 3, PADDUP = 2, PADDDOWN = 5 } })
+nav:AddItem({ kind = "close", anchor = doneButton, offset = 2, neighbors = { PADDUP = 3, PADDDOWN = 1 } })

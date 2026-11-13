@@ -30,6 +30,11 @@
 --              getIndex = function(),   -- choice: current value's list position
 --              secureButton = "Name",   -- button: A clicks this secure button
 --                                       --   for real (see below)
+--              neighbors = { PADDLEFT = 3, PADDRIGHT = 5, PADDUP = 1, PADDDOWN = 7 },
+--                                       -- optional: where each D-pad direction
+--                                       --   goes (item indexes) for windows laid
+--                                       --   out in rows; other directions step
+--                                       --   through the list as usual
 --              offset = 2, noScroll = false }
 -- nav:SetStartItem(index)                 -- focused when the window opens
 --
@@ -281,7 +286,10 @@ function Navigator:HandleButton(button)
     local item = self.items[self.index]
     local count = #self.items
     if not item then return false end
-    if button == "PADDUP" then
+    local neighbor = item.neighbors and item.neighbors[button]
+    if neighbor and self.items[neighbor] then
+        self.index = neighbor
+    elseif button == "PADDUP" then
         self.index = self.index <= 1 and count or self.index - 1
     elseif button == "PADDDOWN" then
         self.index = self.index >= count and 1 or self.index + 1

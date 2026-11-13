@@ -3,6 +3,7 @@
 ## Notes: Shaman totem bar with totem timers, Totem Bar Focus for gamepads, and Edit Mode support
 ## Author: jccr
 ## Version: 0.1.0
+## IconTexture: Interface\AddOns\TotemBarForGamepad\Media\Logo
 ## SavedVariablesPerCharacter: TotemBarForGamepadDB
 
 # GamepadKit: embedded gamepad library (generic, no TotemBarForGamepad code)
@@ -24,5 +25,7 @@ TotemTimers.lua
 Settings.xml
 Settings.lua
 GamepadMacros.lua
+GuideWindow.lua
 Guide.lua
+MacroGuide.lua
 Events.lua

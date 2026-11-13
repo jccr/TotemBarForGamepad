@@ -11,7 +11,7 @@ ns.NO_TOTEM_TEXT = MULTI_CAST_TOOLTIP_NO_TOTEM or "No Totem"
 ns.defaults = {
     -- Bar center offset from screen center, in screen (UIParent) units.
     offsetX = 0,
-    offsetY = -180,
+    offsetY = -170,
     barScale = 1.0,
     -- Sound alerts (SoundAlerts.lua): a Cooldown Manager sound's enum name,
     -- "TextToSpeech" or "None"; lead times in seconds.

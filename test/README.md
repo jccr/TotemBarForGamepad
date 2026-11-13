@@ -42,6 +42,8 @@ steps.
   and side columns.
 - `nav-capture`, `nav-bindings`: FocusNav in both input modes, including
   `bindingsOnly` and `passWhileHeld` (LB+RB lets D-pad Left/Right through for paging).
+- `nav-neighbors`: FocusNav item neighbors (the gamepad macros dialog's row:
+  Left/Right along it, Up/Down to Done).
 - `bind-prompt`: "Bind to Action Bar". Each LT/RT layer goes to the right slot,
   reserved slots are rejected, B cancels, paging pass-through works, and closing
   leaves no bindings behind.
