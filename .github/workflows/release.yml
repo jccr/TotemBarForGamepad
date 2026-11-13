@@ -1,0 +1,72 @@
+# Publishes a GitHub release when a version tag (v1.2.3) is pushed:
+# checks the tag against the TOC's ## Version and CHANGELOG.md, runs the
+# offline tests, then attaches the addon zip with that version's changelog
+# section as the release notes.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version and changelog
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          toc_version=$(sed -n 's/^## Version: *//p' src/TotemBarForGamepad.toc | tr -d '\r')
+          if [ "$toc_version" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match the TOC's ## Version ($toc_version)."
+            exit 1
+          fi
+          # This version's section: from "## <version>" to the next "## " heading,
+          # without leading or trailing blank lines.
+          awk -v heading="## $version" '
+            $0 == heading { found = 1; next }
+            found && /^## / { exit }
+            found { lines[++n] = $0 }
+            END {
+              first = 1; last = n
+              while (first <= last && lines[first] ~ /^[[:space:]]*$/) first++
+              while (last >= first && lines[last] ~ /^[[:space:]]*$/) last--
+              for (i = first; i <= last; i++) print lines[i]
+            }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::CHANGELOG.md has no '## $version' section."
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: test/package-lock.json
+
+      - name: Run the offline tests
+        run: |
+          npm ci --prefix test
+          test/run-all.sh "$PWD/src"
+
+      - name: Package the addon
+        run: |
+          mkdir -p dist/TotemBarForGamepad
+          cp -R src/. dist/TotemBarForGamepad/
+          find dist -name .DS_Store -delete
+          cd dist && zip -qr "TotemBarForGamepad-$VERSION.zip" TotemBarForGamepad
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "dist/TotemBarForGamepad-$VERSION.zip" \
+            --title "Totem Bar for Gamepad $VERSION" \
+            --notes-file release-notes.md \
+            --verify-tag

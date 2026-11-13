@@ -27,6 +27,7 @@ test/       offline test suite (see test/README.md)
 assets/     the full-size logo (the addon ships a small icon in src/Media)
 Justfile    test and build recipes
 CHANGELOG.md  what changed in each version
+.github/    the release workflow
 ```
 
 ## Development
@@ -48,6 +49,23 @@ in the game's `WTF` folder, not the addon folder.
 Edit the code in `src/` only. The installed copy is overwritten on every build.
 
 `just test path/to/addon` tests another copy, such as the installed one.
+
+## Releasing
+
+1. Add the version's section to `CHANGELOG.md` (`## 1.2.3`), written for
+   players.
+2. Set `## Version: 1.2.3` in `src/TotemBarForGamepad.toc`.
+3. Commit, tag and push:
+
+   ```sh
+   git tag -a v1.2.3 -m "Totem Bar for Gamepad 1.2.3"
+   git push origin main v1.2.3
+   ```
+
+Pushing the tag runs `.github/workflows/release.yml`. It checks the tag
+against the TOC version and the changelog, runs the tests, and publishes a
+GitHub release with `TotemBarForGamepad-1.2.3.zip` (unzips into
+`Interface/AddOns`) and that version's changelog section as the notes.
 
 ## Testing
 
