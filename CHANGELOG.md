@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+### Changed
+
+- **Totem Expired alert is off by default** (None). Choose a sound for it
+  in Options → AddOns.
+
 ## 0.2.0
 
 ### New

@@ -22,7 +22,7 @@ ns.defaults = {
     -- Sound alerts (SoundAlerts.lua): a Cooldown Manager sound's enum name,
     -- "TextToSpeech" or "None"; lead times in seconds.
     alertTotemExpiring = "InstrumentsBellRing",
-    alertTotemExpired = "ImpactsLowThud",
+    alertTotemExpired = "None",
     alertWeaponExpiring = "InstrumentsBellRing",
     alertLeadTime = 5,
     alertWeaponLeadTime = 60,

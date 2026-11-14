@@ -314,12 +314,16 @@ print("alert defaults:", db.alertTotemExpiring, db.alertTotemExpired, db.alertWe
 PLAYED = {}
 NS.PlayAlert("InstrumentsBellRing", "Searing Totem"); NS.PlayAlert("TextToSpeech", "Searing Totem"); NS.PlayAlert("None", "x")
 print("play:", table.concat(PLAYED, " | "))
--- Expired: an active slot cleared alerts; quiet period suppresses.
+-- Expired: off by default (None); with a sound, an active slot cleared
+-- alerts and a quiet period suppresses.
 PLAYED = {}
 local slot = NS.slots[1]; slot.active = true; slot.totemName = "Stoneskin Totem"
 GetTime = function() return 1000 end
 TIMERS = {}
 local function after(seconds) local now = GetTime() + seconds; GetTime = function() return now end; RunTimers() end
+NS.EndTotemTimer(1); after(0.5)
+print(#PLAYED == 0 and "ok expired is silent by default" or "FAIL default expired played: " .. table.concat(PLAYED, " | "))
+after(10); PLAYED = {}; slot.active = true; db.alertTotemExpired = "ImpactsLowThud"
 NS.EndTotemTimer(1); print("expired alert waits:", #PLAYED)
 after(0.5); print("expired alert:", table.concat(PLAYED, " | "))
 PLAYED = {}; slot.active = true; NS.QuietTotemAlerts(2); NS.EndTotemTimer(1); after(0.5); print("expired while quiet:", #PLAYED)
