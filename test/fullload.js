@@ -84,7 +84,7 @@ function ClearOverrideBindings() end
 
 ACTIONS = {}
 function GetActionInfo(a) local v = ACTIONS[a] if v then return "spell", v end end
-function HasAction(a) return ACTIONS[a] ~= nil end
+C_ActionBar.HasAction = function(a) return ACTIONS[a] ~= nil end
 NUM_ACTIONBAR_BUTTONS = 12
 GetBindingText = function(k) return "|A:Gamepad_Ltr_A_64:24:24|a" end
 UISpecialFrames = {}

@@ -332,9 +332,8 @@ end
 -- Whether the game has sent the action bars yet: before it has, every slot
 -- reads empty. Any action on any bar means they're in.
 local function ActionBarsLoaded()
-    if not HasAction then return false end
     for action = 1, TOTEM_BAR_START + 4 * #ns.callSpells do
-        local has = HasAction(action)
+        local has = C_ActionBar.HasAction(action)
         if ns.IsSecretValue(has) then return false end
         if has then return true end
     end

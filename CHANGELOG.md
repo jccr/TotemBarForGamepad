@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+### Fixed
+
+- **Empty totem bar slots could show a totem** when the game's deprecated
+  API fallbacks are off. The addon now uses the current action bar API.
+
 ## 0.2.1
 
 ### Changed
