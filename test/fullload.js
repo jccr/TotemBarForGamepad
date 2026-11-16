@@ -301,6 +301,11 @@ PROXIES.TOTEMBARFORGAMEPAD_barFocusTotemCastOnSelect.set(false)
 LINES = {}
 GameTooltip = setmetatable({ AddLine = function(_, t) LINES[#LINES + 1] = t end }, { __index = function() return function() end end })
 Kit = NS.GamepadKit; Kit.PlaceTooltip = function() end
+-- Generic gamepads (Steam Input) get Blizzard's Xbox art, not numbered glyphs.
+GetBindingText = function(k) return "|A:Gamepad_Gen_1_64:24:24|a" end
+expect("generic gamepad A glyph", Kit.Glyph("PAD1", 16, "A"), "|A:gamepad-xbox1-buttona-normal:16:16|a")
+expect("generic gamepad LB glyph", Kit.Glyph("PADLSHOULDER", 16, "LB"), "|A:gamepad-xbox1-trigger-lb-normal:16:16|a")
+GetBindingText = function(k) return "|A:Gamepad_Ltr_A_64:24:24|a" end
 Kit.Glyph = function(key, size, fallback) return "[" .. tostring(fallback) .. "]" end
 for _, focus in ipairs({ { 2, 0 }, { 2, 1 }, { 2, 2 } }) do
     LINES = {}

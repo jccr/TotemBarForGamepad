@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.3
+
+### Fixed
+
+- **Steam Deck and Steam Input showed numbered button glyphs** (1, 2, 3)
+  instead of A, B, X, Y. Generic gamepads now get Blizzard's Xbox art.
+
+### Changed
+
+- **Button glyphs.** D-pad up and down, the shoulder buttons and the
+  triggers now use Blizzard's button art, like the face buttons.
+
 ## 0.2.2
 
 ### Fixed
